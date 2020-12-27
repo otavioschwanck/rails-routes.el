@@ -11,6 +11,33 @@
 ;;; Commentary
 ;;
 ;; A package to help you to find and insert routes into your code
+;;
+;;; emacs-rails-routes.el --- a simple package                     -*- lexical-binding: t; -*-
+
+;; Copyright (C) 2020  Otávio Schwanck
+
+;; Author: Otávio Schwanck <otavioschwanck@gmail.com>
+;; Keywords: lisp ruby rails routes
+;; Version: 0.1
+
+;; This program is free software; you can redistribute it and/or modify
+;; it under the terms of the GNU General Public License as published by
+;; the Free Software Foundation, either version 3 of the License, or
+;; (at your option) any later version.
+
+;; This program is distributed in the hope that it will be useful,
+;; but WITHOUT ANY WARRANTY; without even the implied warranty of
+;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+;; GNU General Public License for more details.
+
+;; You should have received a copy of the GNU General Public License
+;; along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+;;; Commentary:
+
+;; A package to help you to find and insert routes into your code
+
+;;; Code:
 
 (defvar rails-routes-default-search 'ivy "Default search to search for the routes.  Available values: 'helm 'ivy")
 (defvar rails-routes-search-command "RUBYOPT=-W0 rails routes" "Command executed to search the routes")
@@ -91,3 +118,4 @@
 (add-hook 'after-save-hook 'rails-routes-invalidate-cache)
 
 (provide 'emacs-rails-routes)
+;;; emacs-rails-routes.el ends here
