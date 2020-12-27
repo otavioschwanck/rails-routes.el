@@ -1,18 +1,4 @@
-;;; emacs-rails-routes.el -*- lexical-binding: t; -*-
-
-;;
-;; Copyright (C) 2020 Otávio Schwanck <otavioschwanck@gmail.com>
-
-;; Author: Otávio Schwanck <otavioschwanck@gmail.com>
-;; Version: 1.0
-;; Package-Requires: ((emacs "26.0"))
-;; Keywords: ruby rails routes
-;;
-;;; Commentary
-;;
-;; A package to help you to find and insert routes into your code
-;;
-;;; emacs-rails-routes.el --- a simple package                     -*- lexical-binding: t; -*-
+;;; emacs-rails-routes.el --- Rails routes utils                     -*- lexical-binding: t; -*-
 
 ;; Copyright (C) 2020  Otávio Schwanck
 
