@@ -23,7 +23,7 @@
 
 ;; A package to help you to find and insert routes into your code.  It fetches all routes and cache it.
 ;; You will not need to use the terminal to search and insert your routes.  Just call it and select
-;; the route will want.
+;; the route you want.
 
 ;;; Code:
 
