@@ -21,9 +21,10 @@
 
 ;;; Commentary:
 
-;; A package to help you to find and insert routes into your code.  It fetches all routes and cache it.
-;; You will not need to use the terminal to search and insert your routes.  Just call it and select
-;; the route will want.
+;; This is a package to help you find and insert rails routes into your code.
+;; Instead of going to the terminal or loading the path in the browser, you just call 'rails-routes-find',
+;; It will fetch and save on cache all routes used by your application, so you have a reliable and easy way to search
+;; and insert your routes.
 
 ;;; Code:
 
