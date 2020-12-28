@@ -112,7 +112,13 @@
   "Invalidate cache when the file that will be saved is routes.rb."
   (when (string-match-p "routes.rb" (buffer-file-name)) (rails-routes--set-cache-validations nil)))
 
+(defun rails-routes--add-alist ()
+  "Add the rails-routes-cache and rails-routes-cache-validations to alist"
+  (add-to-list 'savehist-additional-variables 'rails-routes-cache)
+  (add-to-list 'savehist-additional-variables 'rails-routes-cache-validations))
+
 (add-hook 'after-save-hook 'rails-routes-invalidate-cache)
+(add-hook 'savehist-mode-hook #'rails-routes--add-alist)
 
 (provide 'rails-routes)
 ;;; rails-routes.el ends here
