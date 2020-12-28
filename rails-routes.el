@@ -27,7 +27,7 @@
 
 ;;; Code:
 
-;;;###autoload'
+;;;###autoload
 
 (defvar rails-routes-search-command "RUBYOPT=-W0 rails routes" "Command executed to search the routes.")
 (defvar rails-routes-insert-after-path "_path" "What will be inserted after call rails-routes-find.")
