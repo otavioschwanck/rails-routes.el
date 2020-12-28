@@ -101,12 +101,12 @@
 (defun rails-routes-find ()
   "Find rails routes on current project."
   (interactive)
-  (rails-routes--find-with-ivy nil))
+  (rails-routes--find nil))
 
 (defun rails-routes-find-with-class ()
   "Find rails routes on current project.  Also insert a prefix class.  This can be used outside views."
   (interactive)
-  (rails-routes--find-with-ivy t))
+  (rails-routes--find t))
 
 (defun rails-routes-invalidate-cache ()
   "Invalidate cache when the file that will be saved is routes.rb."
