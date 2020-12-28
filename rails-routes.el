@@ -126,7 +126,6 @@
   "Add the rails-routes-cache and rails-routes-cache-validations to alist."
   (if rails-routes-use-cache
       (progn
-        (message "routes.rb has changed.  Yhe rails routes cache will be invalidated...")
         (add-to-list 'savehist-additional-variables 'rails-routes-cache)
         (add-to-list 'savehist-additional-variables 'rails-routes-cache-validations))))
 
