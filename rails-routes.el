@@ -1,4 +1,4 @@
-;;; rails-routes.el --- Rails routes utils                     -*- lexical-binding: t; -*-
+;;; rails-routes.el ---  Search and insert rails routes through emacs                     -*- lexical-binding: t; -*-
 
 ;; Copyright (C) 2020  Otávio Schwanck
 
@@ -23,11 +23,9 @@
 
 ;; A package to help you to find and insert routes into your code.  It fetches all routes and cache it.
 ;; You will not need to use the terminal to search and insert your routes.  Just call it and select
-;; the route you want.
+;; the route will want.
 
 ;;; Code:
-
-;;;###autoload
 
 (defvar rails-routes-search-command "RUBYOPT=-W0 rails routes" "Command executed to search the routes.")
 (defvar rails-routes-insert-after-path "_path" "What will be inserted after call rails-routes-find.")
@@ -63,28 +61,25 @@
 (defun rails-routes--run-command ()
   "Run rails-routes-search-command and return it."
   (message "Fetching routes.  Please wait.")
-  (setq-local COMMAND-RESULT (cl-remove-if-not
-                              (lambda (element)
-                                (or (eq (length (split-string element " +")) 5)
-                                    (eq (length (split-string element " +")) 4)))
-                              (split-string (shell-command-to-string rails-routes-search-command) "\n")))
+  (let ((COMMAND-RESULT (cl-remove-if-not
+                         (lambda (element)
+                           (or (eq (length (split-string element " +")) 5)
+                               (eq (length (split-string element " +")) 4)))
+                         (split-string (shell-command-to-string rails-routes-search-command) "\n"))))
 
+    (if rails-routes-use-cache
+        (progn
+          (rails-routes--set-cache COMMAND-RESULT)
+          (rails-routes--set-cache-validations t)))
 
-  (if rails-routes-use-cache
-      (progn
-        (rails-routes--set-cache COMMAND-RESULT)
-        (rails-routes--set-cache-validations t)))
-
-  COMMAND-RESULT)
+    COMMAND-RESULT))
 
 (defun rails-routes--get-routes-cached ()
   "Get the cached routes if not exists."
-  (setq-local ROUTES-RESULT
-              (if (cdr (assoc (projectile-project-name) rails-routes-cache-validations))
-                  (cdr (assoc (projectile-project-name) rails-routes-cache))
-                (rails-routes--run-command)))
-
-  (if (eq ROUTES-RESULT nil) (rails-routes--run-command) ROUTES-RESULT))
+  (let ((ROUTES-RESULT (if (cdr (assoc (projectile-project-name) rails-routes-cache-validations))
+                           (cdr (assoc (projectile-project-name) rails-routes-cache))
+                         (rails-routes--run-command))))
+    (if (eq ROUTES-RESULT nil) (rails-routes--run-command) ROUTES-RESULT)))
 
 (defun rails-routes--get-routes ()
   "Handle if need to call cache or run directly the command."
@@ -92,45 +87,60 @@
 
 (defun rails-routes--guess-route (CONTROLLER-FULL-PATH)
   "Try to get the route name when rails routes don't show to us. CONTROLLER-FULL-PATH:  controller name plus action."
-  (setq-local CONTROLLER-PATH (nth 0 (split-string CONTROLLER-FULL-PATH "#")))
-  (replace-regexp-in-string "\/" "_" CONTROLLER-PATH))
+  (let ((CONTROLLER-PATH (nth 0 (split-string CONTROLLER-FULL-PATH "#"))))
+    (replace-regexp-in-string "\/" "_" CONTROLLER-PATH)))
 
 (defun rails-routes--find (INSERT-CLASS)
   "Ask for the route you want and insert on code.  INSERT-CLASS: if t, insert the prefix class."
-  (setq-local SELECTED-VALUE (split-string (completing-read "Route: " (rails-routes--get-routes)) " +"))
-  (when INSERT-CLASS (insert rails-routes-class-name))
-  (rails-routes--insert-value SELECTED-VALUE)
-  (setq-local SELECTED-ROUTE (nth (if (eq (length SELECTED-VALUE) 5) 3 2) SELECTED-VALUE))
-  (when (or (string-match-p ":id" SELECTED-ROUTE)
-            (string-match-p ":[a-zA-Z0-9]+_id" SELECTED-ROUTE))
-    (progn (insert "()") (backward-char))))
+  (let* ((selected-value (split-string (completing-read "Route: " (rails-routes--get-routes)) " +"))
+         (selected-route (nth (if (eq (length selected-value) 5) 3 2) selected-value)))
+    (when INSERT-CLASS (insert rails-routes-class-name))
+    (rails-routes--insert-value selected-value)
+    (when (or (string-match-p ":id" selected-route)
+              (string-match-p ":[a-zA-Z0-9]+_id" selected-route))
+      (progn (insert "()") (backward-char)))))
 
 (defun rails-routes--insert-value (SELECTED-VALUE)
   "Insert the selected_value.  SELECTED-VALUE: Item im list."
   (insert (if (eq (length SELECTED-VALUE) 5) (nth 1 SELECTED-VALUE)
             (rails-routes--guess-route (nth 3 SELECTED-VALUE))) rails-routes-insert-after-path))
 
+;;;###autoload
 (defun rails-routes-find ()
   "Find rails routes on current project."
   (interactive)
   (rails-routes--find nil))
 
+;;;###autoload
 (defun rails-routes-find-with-class ()
   "Find rails routes on current project.  Also insert a prefix class.  This can be used outside views."
   (interactive)
   (rails-routes--find t))
 
+;;;###autoload
 (defun rails-routes-invalidate-cache ()
   "Invalidate cache when the file that will be saved is routes.rb."
   (when (string-match-p "routes.rb" (buffer-file-name)) (rails-routes--set-cache-validations nil)))
 
 (defun rails-routes--add-alist ()
   "Add the rails-routes-cache and rails-routes-cache-validations to alist."
-  (add-to-list 'savehist-additional-variables 'rails-routes-cache)
-  (add-to-list 'savehist-additional-variables 'rails-routes-cache-validations))
+  (if rails-routes-use-cache
+      (progn
+        (message "routes.rb has changed.  Yhe rails routes cache will be invalidated...")
+        (add-to-list 'savehist-additional-variables 'rails-routes-cache)
+        (add-to-list 'savehist-additional-variables 'rails-routes-cache-validations))))
 
-(add-hook 'after-save-hook 'rails-routes-invalidate-cache)
-(add-hook 'savehist-mode-hook #'rails-routes--add-alist)
+(defun rails-routes--set-routes-hook ()
+  "Set the hook for 'after-save-hook' only for routes.rb."
+  (make-local-variable 'after-save-hook)
+  (if (string-match-p "routes.rb" (buffer-file-name))
+    (progn
+      (add-hook 'after-save-hook 'rails-routes-invalidate-cache))))
+
+(add-hook 'ruby-mode-hook #'rails-routes--set-routes-hook)
+
+(with-eval-after-load 'savehist
+  '(add-hook 'savehist-mode-hook #'rails-routes--add-alist))
 
 (provide 'rails-routes)
 ;;; rails-routes.el ends here
