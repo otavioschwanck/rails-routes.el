@@ -65,8 +65,10 @@
   (message "Fetching routes.  Please wait.")
   (setq-local COMMAND-RESULT (cl-remove-if-not
                               (lambda (element)
-                                (eq (length (split-string element " +")) 5))
+                                (or (eq (length (split-string element " +")) 5)
+                                    (eq (length (split-string element " +")) 4)))
                               (split-string (shell-command-to-string rails-routes-search-command) "\n")))
+
 
   (if rails-routes-use-cache
       (progn
@@ -88,15 +90,25 @@
   "Handle if need to call cache or run directly the command."
   (if rails-routes-use-cache (rails-routes--get-routes-cached) (rails-routes--run-command)))
 
+(defun rails-routes--guess-route (CONTROLLER-FULL-PATH)
+  "Try to get the route name when rails routes don't show to us. CONTROLLER-FULL-PATH:  controller name plus action."
+  (setq-local CONTROLLER-PATH (nth 0 (split-string CONTROLLER-FULL-PATH "#")))
+  (replace-regexp-in-string "\/" "_" CONTROLLER-PATH))
+
 (defun rails-routes--find (INSERT-CLASS)
   "Ask for the route you want and insert on code.  INSERT-CLASS: if t, insert the prefix class."
   (setq-local SELECTED-VALUE (split-string (completing-read "Route: " (rails-routes--get-routes)) " +"))
   (when INSERT-CLASS (insert rails-routes-class-name))
-  (insert (nth 1 SELECTED-VALUE) rails-routes-insert-after-path)
-  (setq-local SELECTED-ROUTE (nth 3 SELECTED-VALUE))
+  (rails-routes--insert-value SELECTED-VALUE)
+  (setq-local SELECTED-ROUTE (nth (if (eq (length SELECTED-VALUE) 5) 3 2) SELECTED-VALUE))
   (when (or (string-match-p ":id" SELECTED-ROUTE)
             (string-match-p ":[a-zA-Z0-9]+_id" SELECTED-ROUTE))
     (progn (insert "()") (backward-char))))
+
+(defun rails-routes--insert-value (SELECTED-VALUE)
+  "Insert the selected_value.  SELECTED-VALUE: Item im list."
+  (insert (if (eq (length SELECTED-VALUE) 5) (nth 1 SELECTED-VALUE)
+            (rails-routes--guess-route (nth 3 SELECTED-VALUE))) rails-routes-insert-after-path))
 
 (defun rails-routes-find ()
   "Find rails routes on current project."
@@ -113,7 +125,7 @@
   (when (string-match-p "routes.rb" (buffer-file-name)) (rails-routes--set-cache-validations nil)))
 
 (defun rails-routes--add-alist ()
-  "Add the rails-routes-cache and rails-routes-cache-validations to alist"
+  "Add the rails-routes-cache and rails-routes-cache-validations to alist."
   (add-to-list 'savehist-additional-variables 'rails-routes-cache)
   (add-to-list 'savehist-additional-variables 'rails-routes-cache-validations))
 
