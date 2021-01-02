@@ -4,7 +4,8 @@
 
 ;; Author: Otávio Schwanck <otavioschwanck@gmail.com>
 ;; Keywords: lisp ruby rails routes
-;; Version: 0.1
+;; Version: 0.2
+;; Package-Requires: ((emacs "26.0") (string-inflection "1.0.11") (projectile "2.3.0"))
 
 ;; This program is free software; you can redistribute it and/or modify
 ;; it under the terms of the GNU General Public License as published by
@@ -25,6 +26,9 @@
 ;; Instead of going to the terminal or loading the path in the browser, you just call 'rails-routes-find',
 ;; It will fetch and save on cache all routes used by your application, so you have a reliable and easy way to search
 ;; and insert your routes.
+;;
+;; New on 0.2
+;; Add rails-routes-jump to jump to the route controller.  Works with activeadmin.
 
 ;;; Code:
 
