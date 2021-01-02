@@ -210,6 +210,7 @@
 
     (find-file (expand-file-name result project-root))))
 
+;;;###autoload
 (defun rails-routes-jump ()
   "Go to the route at point."
   (interactive)
