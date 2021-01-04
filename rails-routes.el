@@ -228,8 +228,8 @@
 
 (add-hook 'ruby-mode-hook #'rails-routes--set-routes-hook)
 
-(with-eval-after-load 'savehist
-  '(add-hook 'savehist-mode-hook #'rails-routes--add-alist))
+(eval-after-load "savehist"
+ '(add-hook 'savehist-mode-hook #'rails-routes--add-alist))
 
 (provide 'rails-routes)
 ;;; rails-routes.el ends here
