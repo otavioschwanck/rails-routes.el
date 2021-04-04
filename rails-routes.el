@@ -3,7 +3,7 @@
 ;; Copyright (C) 2020  Otávio Schwanck
 
 ;; Author: Otávio Schwanck <otavioschwanck@gmail.com>
-;; Keywords: lisp ruby rails routes
+;; Keywords: tools languages
 ;; Homepage: https://github.com/otavioschwanck/rails-routes
 ;; Version: 0.2
 ;; Package-Requires: ((emacs "26.0") (string-inflection "1.0.11") (projectile "2.3.0"))
