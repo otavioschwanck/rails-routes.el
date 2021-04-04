@@ -1,9 +1,10 @@
-;;; rails-routes.el ---  Search and insert rails routes through emacs                     -*- lexical-binding: t; -*-
+;;; rails-routes.el --- Search for and insert rails routes    -*- lexical-binding: t; -*-
 
 ;; Copyright (C) 2020  Otávio Schwanck
 
 ;; Author: Otávio Schwanck <otavioschwanck@gmail.com>
 ;; Keywords: lisp ruby rails routes
+;; Homepage: https://github.com/otavioschwanck/rails-routes
 ;; Version: 0.2
 ;; Package-Requires: ((emacs "26.0") (string-inflection "1.0.11") (projectile "2.3.0"))
 
@@ -31,6 +32,8 @@
 ;; Add rails-routes-jump to jump to the route controller.  Works with activeadmin.
 
 ;;; Code:
+(require 'savehist)
+(require 'projectile)
 
 (defvar rails-routes-search-command "RUBYOPT=-W0 rails routes" "Command executed to search the routes.")
 (defvar rails-routes-insert-after-path "_path" "What will be inserted after call rails-routes-find.")
@@ -40,7 +43,6 @@
 
 (defvar rails-routes-cache '())
 (defvar rails-routes-cache-validations '())
-(defvar savehist-additional-variables '())
 
 (defun rails-routes--set-cache (val)
   "Set de cache values. VAL:  Value to set."
@@ -180,9 +182,7 @@
           (goto-char (point-min))
           (search-forward (concat "member_action :" action) (point-max) t)
           (search-forward (concat "collection_action :" action) (point-max) t))
-      (rails-routes--go-to-controller controller_name action))
-    )
-  )
+      (rails-routes--go-to-controller controller_name action))))
 
 (defun rails-routes--go-to-controller-and-action (full_action)
   "Go to controller and then, go to def action_name.  FULL_ACTION: action showed on rails routes."
@@ -228,8 +228,7 @@
 
 (add-hook 'ruby-mode-hook #'rails-routes--set-routes-hook)
 
-(eval-after-load "savehist"
- '(add-hook 'savehist-mode-hook #'rails-routes--add-alist))
+(add-hook 'savehist-mode-hook #'rails-routes--add-alist)
 
 (provide 'rails-routes)
 ;;; rails-routes.el ends here
