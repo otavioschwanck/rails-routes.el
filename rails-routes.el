@@ -136,7 +136,7 @@ the `rails-routes-class-name' prefix."
 (defun rails-routes-insert ()
   "Find rails routes on current project."
   (interactive)
-  (rails-routes--find nil))
+  (rails-routes--insert nil))
 
 ;;;###autoload
 (defun rails-routes-insert-with-class ()
