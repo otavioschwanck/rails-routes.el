@@ -142,7 +142,7 @@ the `rails-routes-class-name' prefix."
 (defun rails-routes-insert-with-class ()
   "Find rails routes on current project.  Also insert a prefix class.  This can be used outside views."
   (interactive)
-  (rails-routes--find t))
+  (rails-routes--insert t))
 
 ;;;###autoload
 (defun rails-routes-invalidate-cache ()
