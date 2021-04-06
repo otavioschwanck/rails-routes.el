@@ -6,7 +6,7 @@
 ;; Keywords: tools languages
 ;; Homepage: https://github.com/otavioschwanck/rails-routes
 ;; Version: 0.2
-;; Package-Requires: ((emacs "26.0") (string-inflection "1.0.11") (projectile "2.3.0"))
+;; Package-Requires: ((emacs "26.0") (inflections "2.5") (projectile "2.3.0"))
 
 ;; This program is free software; you can redistribute it and/or modify
 ;; it under the terms of the GNU General Public License as published by
@@ -34,6 +34,8 @@
 ;;; Code:
 (require 'savehist)
 (require 'projectile)
+(require 'subr-x)
+(require 'inflections)
 
 (defgroup rails-routes nil
   "Search for and insert rails routes."
@@ -175,7 +177,7 @@ PATH: a rails routes path or url."
   "Singularize all words in a route.  WORD: any_word."
   (setq word (substring word 5))
   (let ((words (split-string word "_")))
-    (string-join (mapcar #'singularize-string words) "_")))
+    (string-join (mapcar #'inflection-singularize-string words) "_")))
 
 (defun rails-routes--goto-activeadmin-controller (controller_name action)
   "Try to go to activeadmin first, if not exists, go to app/controllers.
