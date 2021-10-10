@@ -1,0 +1,64 @@
+* About
+Search rails routes using emacs and insert in your code.
+
+[[file:demo.gif]]
+
+* Installation
+** Manual
+Load =rails-routes.el= in your personal configuration.
+
+** MELPA
+Coming soon.
+
+* Features
+- Search through all routes on a rails project
+- Insert routes direct to the code, formatted, detecting if is on a view/helper or a class (use prefix for class)
+- Cache (After the first search, the result will be save and persisted for all emacs sessions).
+- Auto upgrade cache when rails routes is changed.
+
+* Configuring
+
+Example of how to set the shortcuts:
+
+#+begin_src emacs-lisp
+;; On vanilla
+(define-key ruby-mode-map (kbd "C-c r") 'rails-routes-insert) ;; Search with cache on ruby mode
+(define-key ruby-mode-map (kbd "C-c C-r") 'rails-routes-insert-no-cache) ;; Search refresh cache on ruby mode
+(define-key ruby-mode-map (kbd "C-c ! r") 'rails-routes-jump) ;; go to route at point (definition)
+
+;; Load this after web-mode
+(define-key web-mode-map (kbd "C-c r") 'rails-routes-insert) ;; Search with cache on web-mode
+(define-key web-mode-map (kbd "C-c C-r") 'rails-routes-insert-no-cache) ;; Search refresh cache web-mode
+(define-key web-mode-map (kbd "C-c ! r") 'rails-routes-jump) ;; go to route at point (definition)
+
+;; On doom emacs
+(map! :map ruby-mode-map "C-c r" 'rails-routes-insert) ;; Search with cache on ruby mode
+(map! :map ruby-mode-map "C-c C-r" 'rails-routes-insert-no-cache) ;; Search refresh cache on ruby modee
+(map! :after web-mode :map web-mode-map "C-c r" 'rails-routes-insert) ;; Search with cache on web-mode
+(map! :after web-mode :map web-mode-map "C-c C-r" 'rails-routes-insert-no-cache) ;; Search refresh cache web-mode
+
+(define-key evil-normal-state-map (kbd "g a") #'rails-routes-jump) ;; go to route at point using ga (definition)
+(define-key evil-visual-state-map (kbd "g a") #'rails-routes-jump) ;; go to route at point using ga (definition)
+#+end_src
+
+* Customizing
+You can customize by setting this variables:
+
+| Variable                           | Description                         | Default                                |
+| rails-routes-project-root-function | Function used to guess project root | 'projectile-project-root               |
+| rails-routes-project-name-function | Function used to guess project name | 'projectile-project-name               |
+| rails-routes-search-command        | Locales directory                   | "RUBYOPT=-W0 rails routes"             |
+| rails-routes-class-name            | Regex to find yml                   | "Rails.application.routes.url_helpers. |
+
+* My other works:
+
+** Rails i18n:
+https://github.com/otavioschwanck/rails-i18n.el
+
+** My Personal Config (for rails)
+(Very complete, has videos + handbooks of how to use)
+https://github.com/otavioschwanck/doom-emacs-on-rails/
+
+* Do you like my work?  Please, buy me a coffee
+
+https://www.buymeacoffee.com/otavioschwanck

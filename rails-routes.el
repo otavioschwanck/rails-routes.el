@@ -5,8 +5,8 @@
 ;; Author: Otávio Schwanck <otavioschwanck@gmail.com>
 ;; Keywords: tools languages
 ;; Homepage: https://github.com/otavioschwanck/rails-routes
-;; Version: 0.2
-;; Package-Requires: ((emacs "26.0") (inflections "2.5") (projectile "2.3.0"))
+;; Version: 0.3
+;; Package-Requires: ((emacs "27.2") (inflections "1.1"))
 
 ;; This program is free software; you can redistribute it and/or modify
 ;; it under the terms of the GNU General Public License as published by
@@ -28,19 +28,32 @@
 ;; It will fetch and save on cache all routes used by your application, so you have a reliable and easy way to search
 ;; and insert your routes.
 ;;
+;; New on 0.3
+;; - Remove projectile dependency
+;; - Add command to insert routes ignoring cache
+;; - Improve cache upgrade
+;;
 ;; New on 0.2
 ;; Add rails-routes-jump to jump to the route controller.  Works with activeadmin.
 
 ;;; Code:
 (require 'savehist)
-(require 'projectile)
 (require 'subr-x)
 (require 'inflections)
+(require 'cl-lib)
 
 (defgroup rails-routes nil
   "Search for and insert rails routes."
   :group 'tools
   :group 'languages)
+
+(defcustom rails-routes-project-root-function 'projectile-project-root
+  "Function used to get project root."
+  :type 'symbol)
+
+(defcustom rails-routes-project-name-function 'projectile-project-name
+  "Function used to get project name."
+  :type 'symbol)
 
 (defcustom rails-routes-search-command "RUBYOPT=-W0 rails routes"
   "Command executed to search the routes."
@@ -49,10 +62,6 @@
 (defcustom rails-routes-insert-after-path "_path"
   "What will be inserted after calling `rails-routes-insert'."
   :type 'string)
-
-(defcustom rails-routes-use-cache t
-  "If non-nil, will enable caching."
-  :type 'bool)
 
 (defcustom rails-routes-class-name "Rails.application.routes.url_helpers."
   "Prefix used to access rails routes outside the views."
@@ -63,16 +72,16 @@
 
 (defun rails-routes--set-cache (val)
   "Set routes cache to VAL."
-  (when (assoc (projectile-project-name) rails-routes-cache)
-    (setq rails-routes-cache (remove (assoc (projectile-project-name) rails-routes-cache) rails-routes-cache)))
-  (setq rails-routes-cache (cons `(,(projectile-project-name) . ,val) rails-routes-cache)))
+  (when (assoc (funcall rails-routes-project-name-function) rails-routes-cache)
+    (setq rails-routes-cache (remove (assoc (funcall rails-routes-project-name-function) rails-routes-cache) rails-routes-cache)))
+  (setq rails-routes-cache (cons `(,(funcall rails-routes-project-name-function) . ,val) rails-routes-cache)))
 
 (defun rails-routes--set-cache-validations (val)
   "Set validations cache to VAL."
-  (when (assoc (projectile-project-name) rails-routes-cache-validations)
+  (when (assoc (funcall rails-routes-project-name-function) rails-routes-cache-validations)
     (setq rails-routes-cache-validations
-          (remove (assoc (projectile-project-name) rails-routes-cache-validations) rails-routes-cache-validations)))
-  (setq rails-routes-cache-validations (cons `(,(projectile-project-name) . ,val) rails-routes-cache-validations)))
+          (remove (assoc (funcall rails-routes-project-name-function) rails-routes-cache-validations) rails-routes-cache-validations)))
+  (setq rails-routes-cache-validations (cons `(,(funcall rails-routes-project-name-function) . ,val) rails-routes-cache-validations)))
 
 (defun rails-routes-clear-cache ()
   "Clear rails routes cache."
@@ -89,26 +98,18 @@
                              (or (eq len 5) (eq len 4))))
                          (split-string (shell-command-to-string rails-routes-search-command) "\n"))))
 
-    (when rails-routes-use-cache
       (rails-routes--set-cache command-result)
-      (rails-routes--set-cache-validations t))
-
+      (rails-routes--set-cache-validations t)
     command-result))
 
 (defun rails-routes--get-routes-cached ()
   "Get the routes, using the cache if possible."
-  (let ((routes-result (if (cdr (assoc (projectile-project-name) rails-routes-cache-validations))
-                           (cdr (assoc (projectile-project-name) rails-routes-cache))
+  (let ((routes-result (if (cdr (assoc (funcall rails-routes-project-name-function) rails-routes-cache-validations))
+                           (cdr (assoc (funcall rails-routes-project-name-function) rails-routes-cache))
                          (rails-routes--run-command))))
     (if (eq routes-result nil)
         (rails-routes--run-command)
       routes-result)))
-
-(defun rails-routes--get-routes ()
-  "Get the routes, trying the cache first if `rails-routes-use-cache' is enabled."
-  (if rails-routes-use-cache
-      (rails-routes--get-routes-cached)
-    (rails-routes--run-command)))
 
 (defun rails-routes--guess-route (controller-full-path)
   "Guess the route name from CONTROLLER-FULL-PATH.
@@ -116,13 +117,26 @@ CONTROLLER-FULL-PATH is the controller name plus action."
   (let ((controller-path (nth 0 (split-string controller-full-path "#"))))
     (replace-regexp-in-string "\/" "_" controller-path)))
 
-(defun rails-routes--insert (insert-class)
+;;;###autoload
+(defun rails-routes-insert-no-cache ()
+  "Clean cache, then, call rails-routes-insert."
+  (interactive)
+  (rails-routes-clear-cache)
+  (rails-routes-insert))
+
+(defun rails-routes--guess-ignore-class ()
+  "Return t if class need to be inserted."
+  (string-match-p "app/views\\|app/controllers\\|app/helpers" (buffer-file-name)))
+
+;;;###autoload
+(defun rails-routes-insert ()
   "Ask for the route you want and insert on code.
 With prefix argument INSERT-CLASS, fully-qualify the route with
 the `rails-routes-class-name' prefix."
-  (let* ((selected-value (split-string (completing-read "Route: " (rails-routes--get-routes)) " +"))
+  (interactive)
+  (let* ((selected-value (split-string (completing-read "Route: " (rails-routes--get-routes-cached)) " +"))
          (selected-route (nth (if (eq (length selected-value) 5) 3 2) selected-value)))
-    (when insert-class (insert rails-routes-class-name))
+    (when (not (rails-routes--guess-ignore-class)) (insert rails-routes-class-name))
     (rails-routes--insert-value selected-value)
     (when (or (string-match-p ":id" selected-route)
               (string-match-p ":[a-zA-Z0-9]+_id" selected-route))
@@ -135,18 +149,6 @@ the `rails-routes-class-name' prefix."
           rails-routes-insert-after-path))
 
 ;;;###autoload
-(defun rails-routes-insert ()
-  "Find rails routes on current project."
-  (interactive)
-  (rails-routes--insert nil))
-
-;;;###autoload
-(defun rails-routes-insert-with-class ()
-  "Find rails routes on current project.  Also insert a prefix class.  This can be used outside views."
-  (interactive)
-  (rails-routes--insert t))
-
-;;;###autoload
 (defun rails-routes-invalidate-cache ()
   "Invalidate cache when the file that will be saved is routes.rb."
   (when (string-match-p "routes.rb" (buffer-file-name))
@@ -154,8 +156,7 @@ the `rails-routes-class-name' prefix."
 
 (defun rails-routes--add-alist ()
   "Add the rails-routes-cache and rails-routes-cache-validations to alist."
-  (when rails-routes-use-cache
-    (add-to-list 'savehist-additional-variables 'rails-routes-cache)
+    (add-to-list 'savehist-additional-variables 'rails-routes-cache
     (add-to-list 'savehist-additional-variables 'rails-routes-cache-validations)))
 
 (defun rails-routes--remove-path-or-url (path)
@@ -165,7 +166,7 @@ the `rails-routes-class-name' prefix."
 (defun rails-routes--find-controller (path)
   "Find controller for path in routes list.
 PATH: a rails routes path or url."
-  (let ((routes (rails-routes--get-routes))
+  (let ((routes (rails-routes--get-routes-cached))
         (response nil))
     (dolist (item routes)
       (let ((parsed_item (split-string item " +")))
@@ -182,7 +183,7 @@ PATH: a rails routes path or url."
 (defun rails-routes--goto-activeadmin-controller (controller_name action)
   "Try to go to activeadmin first, if not exists, go to app/controllers.
 CONTROLLER_NAME: Path of controller.  ACTION:  Action of the path."
-  (let* ((project-root (projectile-project-root))
+  (let* ((project-root (funcall rails-routes-project-root-function))
          (moved nil)
          (normal-path (expand-file-name (concat "app/admin" (rails-routes--singularize-string controller_name) ".rb") project-root))
          (expanded-path
@@ -219,17 +220,7 @@ CONTROLLER_NAME: Path of controller.  ACTION:  Action of the path."
 
 (defun rails-routes--controller-full-path (controller_name)
   "Return the path of a rails controller using only the name.  CONTROLLER_NAME: Name of the controller."
-  (concat (projectile-project-root) "app/controllers/" controller_name "_controller.rb"))
-
-(defun rails-routes--find-in-controllers (path)
-  "Find route in controllers when route is not found.  PATH: a rails path."
-  (let* ((project-root (projectile-acquire-root))
-         (result (projectile-completing-read "Find your controller: "
-                                             (projectile-project-files project-root)
-                                             :initial-input
-                                             (concat (rails-routes--remove-path-or-url path) " controller"))))
-
-    (find-file (expand-file-name result project-root))))
+  (concat (funcall rails-routes-project-root-function) "app/controllers/" controller_name "_controller.rb"))
 
 ;;;###autoload
 (defun rails-routes-jump ()
@@ -238,21 +229,19 @@ CONTROLLER_NAME: Path of controller.  ACTION:  Action of the path."
   (let* ((path (symbol-name (symbol-at-point)))
          (controller (rails-routes--find-controller (rails-routes--remove-path-or-url path))))
     (if controller
-        (rails-routes--go-to-controller-and-action controller)
-      (rails-routes--find-in-controllers path))
+        (rails-routes--go-to-controller-and-action controller) (message "Route not found."))
     (recenter)))
 
 (defun rails-routes--set-routes-hook ()
   "Set the hook for 'after-save-hook' only for routes.rb."
   (when (and (buffer-file-name)
-             (string-equal "routes.rb" (file-name-nondirectory (buffer-file-name))))
+             (string-equal "routes.rb" (file-name-nondirectory (buffer-file-name)))
+             (assoc (funcall rails-routes-project-name-function) rails-routes-cache)
+             (assoc (funcall rails-routes-project-name-function) rails-routes-cache-validations))
     (add-hook 'after-save-hook 'rails-routes-invalidate-cache nil t)))
 
 (add-hook 'ruby-mode-hook #'rails-routes--set-routes-hook)
-
 (add-hook 'savehist-mode-hook #'rails-routes--add-alist)
-(add-to-list 'savehist-additional-variables 'rails-routes-cache)
-(add-to-list 'savehist-additional-variables 'rails-routes-cache-validations)
 
 (provide 'rails-routes)
 ;;; rails-routes.el ends here
