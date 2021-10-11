@@ -50,8 +50,8 @@ You can customize by setting this variables:
 | Variable                           | Description                         | Default                                |
 | rails-routes-project-root-function | Function used to guess project root | 'projectile-project-root               |
 | rails-routes-project-name-function | Function used to guess project name | 'projectile-project-name               |
-| rails-routes-search-command        | Locales directory                   | "RUBYOPT=-W0 rails routes"             |
-| rails-routes-class-name            | Regex to find yml                   | "Rails.application.routes.url_helpers. |
+| rails-routes-search-command        | Command to find routes              | "RUBYOPT=-W0 rails routes"             |
+| rails-routes-class-name            | Class name to use outside views     | "Rails.application.routes.url_helpers. |
 
 * My other works:
 
