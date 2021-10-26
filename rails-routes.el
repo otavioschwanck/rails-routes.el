@@ -245,7 +245,7 @@ CONTROLLER-NAME: Path of controller.  ACTION:  Action of the path."
 (define-minor-mode rails-routes-global-mode
   "Initialize cache and routes watch."
   :global t
-  :lighter " lighter"
+  :lighter " routes"
   (if rails-routes-global-mode
       (progn
         (add-hook 'ruby-mode-hook #'rails-routes--set-routes-hook)
