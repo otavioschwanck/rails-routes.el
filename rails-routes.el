@@ -6,7 +6,7 @@
 ;; Keywords: tools languages
 ;; Homepage: https://github.com/otavioschwanck/rails-routes
 ;; Version: 0.3
-;; Package-Requires: ((emacs "27.2") (inflections "1.1") (projectile "2.6.0-snapshot"))
+;; Package-Requires: ((emacs "27.2") (inflections "1.1") (projectile "2.5.0"))
 
 ;; This program is free software; you can redistribute it and/or modify
 ;; it under the terms of the GNU General Public License as published by
@@ -48,11 +48,11 @@
   :group 'tools
   :group 'languages)
 
-(defcustom rails-routes-project-root-function 'projectile-project-root
+(defcustom rails-routes-project-root-function #'projectile-project-root
   "Function used to get project root."
   :type 'symbol)
 
-(defcustom rails-routes-project-name-function 'projectile-project-name
+(defcustom rails-routes-project-name-function #'projectile-project-name
   "Function used to get project name."
   :type 'symbol)
 
@@ -108,7 +108,7 @@
   (let ((routes-result (if (cdr (assoc (funcall rails-routes-project-name-function) rails-routes-cache-validations))
                            (cdr (assoc (funcall rails-routes-project-name-function) rails-routes-cache))
                          (rails-routes--run-command))))
-    (if (eq routes-result nil)
+    (if (not routes-result)
         (rails-routes--run-command)
       routes-result)))
 
@@ -239,7 +239,7 @@ CONTROLLER-NAME: Path of controller.  ACTION:  Action of the path."
              (string-equal "routes.rb" (file-name-nondirectory (buffer-file-name)))
              (assoc (funcall rails-routes-project-name-function) rails-routes-cache)
              (assoc (funcall rails-routes-project-name-function) rails-routes-cache-validations))
-    (add-hook 'after-save-hook 'rails-routes-invalidate-cache nil t)))
+    (add-hook 'after-save-hook #'rails-routes-invalidate-cache nil t)))
 
 ;;;###autoload
 (define-minor-mode rails-routes-global-mode

@@ -25,13 +25,13 @@ Example of how to set the shortcuts:
 (rails-routes-global-mode)
 
 ;; On vanilla
-(define-key ruby-mode-map (kbd "C-c o") 'rails-routes-insert) ;; Search with cache on ruby mode
-(define-key ruby-mode-map (kbd "C-c C-o") 'rails-routes-insert-no-cache) ;; Search refresh cache on ruby mode
+(define-key ruby-mode-map (kbd "C-c C-o") 'rails-routes-insert-no-cache) ;; Search with cache on ruby mode
+(define-key ruby-mode-map (kbd "C-c C-S-o") 'rails-routes-insert) ;; Search refresh cache on ruby mode
 (define-key ruby-mode-map (kbd "C-c ! o") 'rails-routes-jump) ;; go to route at point (definition)
 
 ;; Load this after web-mode
-(define-key web-mode-map (kbd "C-c o") 'rails-routes-insert) ;; Search with cache on web-mode
-(define-key web-mode-map (kbd "C-c C-o") 'rails-routes-insert-no-cache) ;; Search refresh cache web-mode
+(define-key web-mode-map (kbd "C-c C-o") 'rails-routes-insert) ;; Search with cache on web-mode
+(define-key web-mode-map (kbd "C-c C-S-o") 'rails-routes-insert-no-cache) ;; Search refresh cache web-mode
 (define-key web-mode-map (kbd "C-c ! o") 'rails-routes-jump) ;; go to route at point (definition)
 
 ;; On doom emacs
