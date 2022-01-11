@@ -29,9 +29,6 @@
 ;; and insert your routes.
 ;;
 ;; New on 0.3
-;; - Now create an file instead of using savehist.  Dont need the major mode anymore
-;;
-;; New on 0.3
 ;; - Remove projectile dependency
 ;; - Add command to insert routes ignoring cache
 ;; - Improve cache upgrade
@@ -40,7 +37,6 @@
 ;; Add rails-routes-jump to jump to the route controller.  Works with activeadmin.
 
 ;;; Code:
-(require 'savehist)
 (require 'subr-x)
 (require 'inflections)
 (require 'cl-lib)
@@ -183,11 +179,6 @@ the `rails-routes-class-name' prefix."
   (when (string-match-p "routes.rb" (buffer-file-name))
     (rails-routes--set-cache-validations nil)
     (rails-routes--save-cache)))
-
-(defun rails-routes--add-alist ()
-  "Add the rails-routes-cache and rails-routes-cache-validations to alist."
-    (add-to-list 'savehist-additional-variables 'rails-routes-cache
-    (add-to-list 'savehist-additional-variables 'rails-routes-cache-validations)))
 
 (defun rails-routes--remove-path-or-url (path)
   "Remove any \"_path\" or \"_url\" suffix from PATH."
