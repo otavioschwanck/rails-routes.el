@@ -21,9 +21,6 @@ Coming soon.
 Example of how to set the shortcuts:
 
 #+begin_src emacs-lisp
-;; Initialize rails routes hooks and file watches
-(rails-routes-global-mode)
-
 ;; On vanilla
 (define-key ruby-mode-map (kbd "C-c C-o") 'rails-routes-insert-no-cache) ;; Search with cache on ruby mode
 (define-key ruby-mode-map (kbd "C-c C-S-o") 'rails-routes-insert) ;; Search refresh cache on ruby mode
