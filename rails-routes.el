@@ -73,7 +73,7 @@
 
 (defcustom rails-routes--cache-loaded nil
   "If t, means that rails routes already loaded the cache."
-  :type 'string)
+  :type 'boolean)
 
 (defun rails-routes--save-cache ()
   "Save rails routes cache file."
