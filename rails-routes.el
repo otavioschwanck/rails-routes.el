@@ -76,6 +76,7 @@
   :type 'string)
 
 (defun rails-routes--save-cache ()
+  "Save rails routes cache file."
   (save-excursion
     (let ((buf (find-file-noselect rails-routes-cache-path)))
       (set-buffer buf)
@@ -87,6 +88,7 @@
       (kill-buffer))))
 
 (defun rails-routes--load-cache ()
+  "Love rails routes cache file."
   (when (and (file-exists-p rails-routes-cache-path) (not rails-routes--cache-loaded))
     (load rails-routes-cache-path)))
 
