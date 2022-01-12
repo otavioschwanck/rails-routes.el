@@ -8,7 +8,7 @@ Search rails routes using emacs and insert in your code.
 Load =rails-routes.el= in your personal configuration.
 
 ** MELPA
-Coming soon.
+M-x package-install rails-routes
 
 * Features
 - Search through all routes on a rails project
