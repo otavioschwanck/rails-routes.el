@@ -10,6 +10,9 @@ Load =rails-routes.el= in your personal configuration.
 ** MELPA
 M-x package-install rails-routes
 
+** Doom Emacs
+(package! rails-routes) on packages.el
+
 * Features
 - Search through all routes on a rails project
 - Insert routes direct to the code, formatted, detecting if is on a view/helper or a class (use prefix for class)
@@ -44,11 +47,10 @@ Example of how to set the shortcuts:
 * Customizing
 You can customize by setting this variables:
 
-| Variable                           | Description                         | Default                                |
-| rails-routes-project-root-function | Function used to guess project root | 'projectile-project-root               |
-| rails-routes-project-name-function | Function used to guess project name | 'projectile-project-name               |
-| rails-routes-search-command        | Command to find routes              | "RUBYOPT=-W0 rails routes"             |
-| rails-routes-class-name            | Class name to use outside views     | "Rails.application.routes.url_helpers. |
+| Variable                     | Description                                                          | Default                                |
+| rails-routes-project-package | Package to use project related stuff (available: projectile project) | 'projectile                            |
+| rails-routes-search-command  | Command to find routes                                               | "RUBYOPT=-W0 rails routes"             |
+| rails-routes-class-name      | Class name to use outside views                                      | "Rails.application.routes.url_helpers. |
 
 * My other works:
 

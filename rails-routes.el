@@ -6,7 +6,7 @@
 ;; Keywords: tools languages
 ;; Homepage: https://github.com/otavioschwanck/rails-routes
 ;; Version: 0.3
-;; Package-Requires: ((emacs "27.2") (inflections "1.1") (projectile "2.5.0"))
+;; Package-Requires: ((emacs "27.2") (inflections "1.1"))
 
 ;; This program is free software; you can redistribute it and/or modify
 ;; it under the terms of the GNU General Public License as published by
@@ -40,19 +40,18 @@
 (require 'subr-x)
 (require 'inflections)
 (require 'cl-lib)
-(require 'projectile)
 
 (defgroup rails-routes nil
   "Search for and insert rails routes."
   :group 'tools
   :group 'languages)
 
-(defcustom rails-routes-project-root-function #'projectile-project-root
-  "Function used to get project root."
-  :type 'symbol)
+(defun rails-routes--default-project-package ()
+  "Return the default project package."
+  (if (featurep 'projectile) 'projectile 'project))
 
-(defcustom rails-routes-project-name-function #'projectile-project-name
-  "Function used to get project name."
+(defcustom rails-routes-project-package (rails-routes--default-project-package)
+  "Project package to access project functions."
   :type 'symbol)
 
 (defcustom rails-routes-search-command "RUBYOPT=-W0 rails routes"
@@ -74,6 +73,28 @@
 (defcustom rails-routes--cache-loaded nil
   "If t, means that rails routes already loaded the cache."
   :type 'boolean)
+
+(defun rails-routes-project-name-function ()
+  "Get the project name."
+  (cond
+   ((eq rails-routes-project-package 'projectile) (when (fboundp 'projectile-project-name) (projectile-project-name)))
+   ((eq rails-routes-project-package 'project) (rails-routes--get-project-name-for-project))))
+
+(defun rails-routes-project-root-function ()
+  "Get the project root."
+  (cond
+   ((eq rails-routes-project-package 'projectile) (when (fboundp 'projectile-project-root) (projectile-project-root)))
+   ((eq rails-routes-project-package 'project) (string-replace "~/"
+                                                          (concat (car (split-string
+                                                                (shell-command-to-string "echo $HOME") "\n")) "/")
+                                                          (when (fboundp 'project-root) (project-root (project-current)))))))
+
+(defun rails-routes--get-project-name-for-project ()
+  "Return projects name for project."
+  (let* ((splitted-project-path (split-string (cdr (project-current)) "/"))
+         (splitted-length (length splitted-project-path))
+         (project-name (nth (- splitted-length 2) splitted-project-path)))
+    project-name))
 
 (defun rails-routes--save-cache ()
   "Save rails routes cache file."
@@ -97,22 +118,23 @@
 
 (defun rails-routes--set-cache (val)
   "Set routes cache to VAL."
-  (when (assoc (funcall rails-routes-project-name-function) rails-routes-cache)
-    (setq rails-routes-cache (remove (assoc (funcall rails-routes-project-name-function) rails-routes-cache) rails-routes-cache)))
-  (setq rails-routes-cache (cons `(,(funcall rails-routes-project-name-function) . ,val) rails-routes-cache)))
+  (when (assoc (rails-routes-project-name-function) rails-routes-cache)
+    (setq rails-routes-cache (remove (assoc (rails-routes-project-name-function) rails-routes-cache) rails-routes-cache)))
+  (setq rails-routes-cache (cons `(,(rails-routes-project-name-function) . ,val) rails-routes-cache)))
 
 (defun rails-routes--set-cache-validations (val)
   "Set validations cache to VAL."
-  (when (assoc (funcall rails-routes-project-name-function) rails-routes-cache-validations)
+  (when (assoc (rails-routes-project-name-function) rails-routes-cache-validations)
     (setq rails-routes-cache-validations
-          (remove (assoc (funcall rails-routes-project-name-function) rails-routes-cache-validations) rails-routes-cache-validations)))
-  (setq rails-routes-cache-validations (cons `(,(funcall rails-routes-project-name-function) . ,val) rails-routes-cache-validations)))
+          (remove (assoc (rails-routes-project-name-function) rails-routes-cache-validations) rails-routes-cache-validations)))
+  (setq rails-routes-cache-validations (cons `(,(rails-routes-project-name-function) . ,val) rails-routes-cache-validations)))
 
 (defun rails-routes-clear-cache ()
   "Clear rails routes cache."
   (interactive)
   (setq rails-routes-cache '())
-  (setq rails-routes-cache-validations '()))
+  (setq rails-routes-cache-validations '())
+  (rails-routes--save-cache))
 
 (defun rails-routes--run-command ()
   "Run rails-routes-search-command and return it."
@@ -130,8 +152,8 @@
 
 (defun rails-routes--get-routes-cached ()
   "Get the routes, using the cache if possible."
-  (let ((routes-result (if (cdr (assoc (funcall rails-routes-project-name-function) rails-routes-cache-validations))
-                           (cdr (assoc (funcall rails-routes-project-name-function) rails-routes-cache))
+  (let ((routes-result (if (cdr (assoc (rails-routes-project-name-function) rails-routes-cache-validations))
+                           (cdr (assoc (rails-routes-project-name-function) rails-routes-cache))
                          (rails-routes--run-command))))
     (if (not routes-result)
         (rails-routes--run-command)
@@ -206,7 +228,7 @@ PATH: a rails routes path or url."
 (defun rails-routes--goto-activeadmin-controller (controller-name action)
   "Try to go to activeadmin first, if not exists, go to app/controllers.
 CONTROLLER-NAME: Path of controller.  ACTION:  Action of the path."
-  (let* ((project-root (funcall rails-routes-project-root-function))
+  (let* ((project-root (rails-routes-project-root-function))
          (moved nil)
          (normal-path (expand-file-name (concat "app/admin" (rails-routes--singularize-string controller-name) ".rb") project-root))
          (expanded-path
@@ -230,20 +252,23 @@ CONTROLLER-NAME: Path of controller.  ACTION:  Action of the path."
       (rails-routes--go-to-controller controller-name action))))
 
 (defun rails-routes--go-to-controller-and-action (full-action)
-  "Go to controller and then, go to def action_name.  FULL-ACTION: action showed on rails routes."
+  "Go to controller and then, go to def action_name.
+FULL-ACTION: action showed on rails routes."
   (let ((controller-name (nth 0 (split-string full-action "#"))) (action (nth 1 (split-string full-action "#"))))
     (if (string-match-p "admin" controller-name)
         (rails-routes--goto-activeadmin-controller controller-name action)
       (rails-routes--go-to-controller controller-name action))))
 
 (defun rails-routes--go-to-controller (controller action)
-  "Go to controller using action.  CONTROLLER: controller showed on rails routes. ACTION: action showed on rails routes."
+  "Go to controller using action.  CONTROLLER: controller showed on rails routes.
+ACTION: action showed on rails routes."
   (find-file (rails-routes--controller-full-path controller))
   (search-forward (concat "def " action) (point-max) t))
 
 (defun rails-routes--controller-full-path (controller-name)
-  "Return the path of a rails controller using only the name.  CONTROLLER-NAME: Name of the controller."
-  (concat (funcall rails-routes-project-root-function) "app/controllers/" controller-name "_controller.rb"))
+  "Return the path of a rails controller using only the name.
+CONTROLLER-NAME: Name of the controller."
+  (concat (rails-routes-project-root-function) "app/controllers/" controller-name "_controller.rb"))
 
 ;;;###autoload
 (defun rails-routes-jump ()
@@ -259,8 +284,8 @@ CONTROLLER-NAME: Path of controller.  ACTION:  Action of the path."
   "Set the hook for 'after-save-hook' only for routes.rb."
   (when (and (buffer-file-name)
              (string-equal "routes.rb" (file-name-nondirectory (buffer-file-name)))
-             (assoc (funcall rails-routes-project-name-function) rails-routes-cache)
-             (assoc (funcall rails-routes-project-name-function) rails-routes-cache-validations))
+             (assoc (rails-routes-project-name-function) rails-routes-cache)
+             (assoc (rails-routes-project-name-function) rails-routes-cache-validations))
     (add-hook 'after-save-hook #'rails-routes-invalidate-cache nil t)))
 
 (provide 'rails-routes)
